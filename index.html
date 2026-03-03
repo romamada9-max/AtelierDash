@@ -3,91 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متابعة أتيليه أحمد حمزة</title>
+    <title>لوحة تحكم أتيليه أحمد حمزة</title>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #fce4ec; margin: 0; padding: 15px; text-align: center; }
-        .header { background-color: #d81b60; color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .card h3 { margin: 0; font-size: 14px; color: #777; }
-        .card p { margin: 10px 0 0; font-size: 20px; font-weight: bold; color: #d81b60; }
-        .customer-list { margin-top: 20px; text-align: right; }
-        .customer-item { background: white; padding: 12px; border-radius: 10px; margin-bottom: 8px; border-right: 5px solid #d81b60; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
-        .customer-item span { display: block; font-size: 12px; color: #666; }
-        .customer-item b { font-size: 16px; color: #333; }
+        :root { --main-color: #d81b60; --bg-color: #fce4ec; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg-color); margin: 0; padding: 10px; }
+        .header { background: var(--main-color); color: white; padding: 15px; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .card { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .card h3 { margin: 0; font-size: 13px; color: #888; }
+        .card p { margin: 5px 0 0; font-size: 18px; font-weight: bold; color: var(--main-color); }
+        .list-title { text-align: right; margin-right: 10px; color: #333; font-size: 16px; border-right: 4px solid var(--main-color); padding-right: 10px; }
+        #customersContainer { margin-top: 10px; }
+        .customer-item { background: white; padding: 12px; border-radius: 10px; margin-bottom: 10px; text-align: right; box-shadow: 0 2px 4px rgba(0,0,0,0.03); border-right: 5px solid var(--main-color); }
+        .cust-name { display: block; font-size: 16px; font-weight: bold; color: #333; }
+        .cust-details { font-size: 13px; color: #666; margin-top: 5px; }
+        .cust-date { display: block; font-size: 12px; color: var(--main-color); margin-top: 5px; font-weight: bold; }
+        .loading { color: #999; margin-top: 50px; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>إدارة الأتيليه 👗</h1>
-        <p id="todayDate"></p>
+        <h2 style="margin:0;">أتيليه أحمد حمزة 👗</h2>
+        <div id="dateNow" style="font-size: 12px; opacity: 0.8; margin-top: 5px;"></div>
     </div>
 
-    <div class="stats-grid">
+    <div class="stats">
         <div class="card">
-            <h3>إجمالي الحجوزات</h3>
+            <h3>عدد العميلات</h3>
             <p id="totalCount">0</p>
         </div>
         <div class="card">
-            <h3>إجمالي المحصل</h3>
+            <h3>إجمالي المقدم</h3>
             <p id="totalIncome">0</p>
         </div>
     </div>
 
-    <div class="customer-list">
-        <h3>آخر الحجوزات (أونلاين):</h3>
-        <div id="customersContainer">
-            <p style="text-align:center; color:#999;">جاري جلب البيانات...</p>
-        </div>
+    <h3 class="list-title">آخر الحجوزات المسجلة:</h3>
+    
+    <div id="customersContainer">
+        <div class="loading">جاري الاتصال بالسحاب...</div>
     </div>
 
     <script>
-        // --- إعدادات Firebase الخاصة بك (نفس اللي في الـ C#) ---
+        // 1. إعدادات Firebase - استبدل الرابط برابط مشروعك
         const firebaseConfig = {
-  https://ateliersystem-3ed22-default-rtdb.firebaseio.com/ 
+            databaseURL: "https://ateliersystem-3ed22-default-rtdb.firebaseio.com/" 
         };
-        firebase.initializeApp(firebaseConfig);
+
+        // تهيئة Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
         const db = firebase.database().ref("LiveAtelier");
 
-        // تحديث التاريخ
-        document.getElementById('todayDate').innerText = new Date().toLocaleDateString('ar-EG');
+        // عرض تاريخ اليوم
+        document.getElementById('dateNow').innerText = new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-        // جلب البيانات لحظياً
+        // جلب البيانات وتحديثها تلقائياً
         db.on('value', (snapshot) => {
-            const data = snapshot.val();
             const container = document.getElementById('customersContainer');
-            container.innerHTML = "";
+            const data = snapshot.val();
             
+            if (!data) {
+                container.innerHTML = "<div class='loading'>في انتظار تسجيل أول عميلة من البرنامج...</div>";
+                return;
+            }
+
+            container.innerHTML = "";
             let count = 0;
             let income = 0;
 
-            if (data) {
-                Object.keys(data).reverse().forEach(key => {
-                    const cust = data[key];
-                    count++;
-                    income += parseFloat(cust.Paid || 0);
+            // تحويل البيانات لمصفوفة وعكسها لعرض الأحدث فوق
+            const keys = Object.keys(data).reverse();
+            
+            keys.forEach(key => {
+                const cust = data[key];
+                count++;
+                income += parseFloat(cust.Paid || 0);
 
-                    const html = `
-                        <div class="customer-item">
-                            <b>${cust.CustomerName}</b>
-                            <span>المبلغ: ${cust.Total} | المقدم: ${cust.Paid}</span>
-                            <span style="color:#d81b60">التسليم: ${cust.DeliveryDate}</span>
+                const html = `
+                    <div class="customer-item">
+                        <span class="cust-name">${cust.CustomerName}</span>
+                        <div class="cust-details">
+                            💰 المبلغ: ${cust.Total} ج.م | 💵 المقدم: ${cust.Paid}
                         </div>
-                    `;
-                    container.innerHTML += html;
-                });
-            } else {
-                container.innerHTML = "<p>لا توجد بيانات مرفوعة بعد.</p>";
-            }
+                        <span class="cust-date">🗓 موعد التسليم: ${cust.DeliveryDate}</span>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
 
+            // تحديث كروت الإحصائيات
             document.getElementById('totalCount').innerText = count;
             document.getElementById('totalIncome').innerText = income.toLocaleString() + " ج.م";
+        }, (error) => {
+            document.getElementById('customersContainer').innerHTML = "<div style='color:red'>خطأ في الوصول للبيانات: تأكد من الـ Rules في Firebase</div>";
         });
     </script>
 </body>
 </html>
-
