@@ -1,108 +1,90 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة أتيليه أحمد حمزة</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root { --primary: #d81b60; --bg: #fce4ec; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        
-        /* شاشة الدخول */
-        #loginSection { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 350px; }
-        input[type="password"] { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ddd; border-radius: 10px; text-align: center; font-size: 18px; }
-        .login-btn { width: 100%; padding: 12px; border: none; background: var(--primary); color: white; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 16px; }
+<Window x:Class="AtelierPro.CustomersWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="إدارة العملاء - أتيليه الملكة" Height="700" Width="1000"
+        WindowStartupLocation="CenterScreen" FlowDirection="RightToLeft" Background="#F0F2F5">
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <RowDefinition Height="Auto"/> <RowDefinition Height="*"/>    </Grid.RowDefinitions>
 
-        /* شاشة الداشبورد (مخفية في البداية) */
-        #dashboardSection { display: none; width: 100%; min-height: 100vh; background: #f8f9fa; align-self: flex-start; }
-        .top-bar { background: var(--primary); color: white; padding: 20px; text-align: center; border-radius: 0 0 25px 25px; }
-        .container { padding: 15px; max-width: 600px; margin: auto; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: -30px; }
-        .stat-card { background: white; padding: 15px; border-radius: 15px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
-        .search-box { background: white; padding: 10px; border-radius: 12px; margin: 20px 0; display: flex; align-items: center; }
-        .search-box input { border: none; outline: none; width: 100%; padding: 8px; text-align: right; }
-        .customer-card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 12px; border-right: 6px solid var(--primary); text-align: right; }
-    </style>
-</head>
-<body>
+        <Border Grid.Row="0" Background="#34495E" Padding="15">
+            <TextBlock Text="✨ أتيليه الملكة - إدارة الحجوزات ✨" 
+                       Foreground="White" FontSize="26" FontWeight="Bold" 
+                       HorizontalAlignment="Center" FontFamily="Segoe UI"/>
+        </Border>
 
-    <div id="loginSection">
-        <i class="fas fa-lock" style="font-size: 40px; color: var(--primary);"></i>
-        <h2 style="color: #333;">دخول الإدارة</h2>
-        <input type="password" id="passInput" placeholder="كلمة المرور">
-        <button class="login-btn" onclick="validate()">دخول</button>
-        <p id="err" style="color:red; display:none; margin-top:10px;">خطأ! حاول مرة أخرى</p>
-    </div>
+        <StackPanel Grid.Row="1" Margin="20,10">
+            <Border Background="White" CornerRadius="20" Padding="10" Margin="0,0,0,15" BorderBrush="#DDD" BorderThickness="1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="🔍" VerticalAlignment="Center" Margin="10,0"/>
+                    <TextBox x:Name="TxtSearch" Grid.Column="1" BorderThickness="0" 
+                             VerticalAlignment="Center" FontSize="16" 
+                             TextChanged="TxtSearch_TextChanged" Tag="ابحث باسم العميل أو رقم الهاتف..."/>
+                </Grid>
+            </Border>
 
-    <div id="dashboardSection">
-        <div class="top-bar">
-            <h2 style="margin:0;">لوحة التحكم 👗</h2>
-            <p id="todayDate" style="font-size:12px; opacity:0.8;"></p>
-        </div>
-        <div class="container">
-            <div class="stats-grid">
-                <div class="stat-card"><h3>العميلات</h3><p id="count">0</p></div>
-                <div class="stat-card"><h3>المحصل</h3><p id="income">0</p></div>
-            </div>
-            <div class="search-box">
-                <input type="text" id="srch" placeholder="بحث بالاسم..." onkeyup="draw()">
-                <i class="fas fa-search" style="color:#ccc"></i>
-            </div>
-            <div id="list"></div>
-        </div>
-    </div>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <RadioButton Content="كل العملاء" x:Name="BtnAll" IsChecked="True" Style="{StaticResource {x:Type ToggleButton}}" Padding="15,5" Margin="5" Click="Filter_Click"/>
+                <RadioButton Content="تسليمات اليوم" x:Name="BtnToday" Style="{StaticResource {x:Type ToggleButton}}" Padding="15,5" Margin="5" Click="Filter_Click"/>
+                <RadioButton Content="تسليمات الأسبوع" x:Name="BtnWeek" Style="{StaticResource {x:Type ToggleButton}}" Padding="15,5" Margin="5" Click="Filter_Click"/>
+            </StackPanel>
+        </StackPanel>
 
-    <script>
-        // إعدادات Firebase
-        const conf = { databaseURL: "https://ateliersystem-3ed22-default-rtdb.firebaseio.com/" };
-        firebase.initializeApp(conf);
-        const db = firebase.database().ref("LiveAtelier");
-        let rawData = [];
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="10">
+            <ItemsControl x:Name="CustomersItemsControl">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel HorizontalAlignment="Center"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Width="300" Margin="10" Background="White" CornerRadius="15" Padding="15">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="15" Direction="270" ShadowDepth="2" Opacity="0.1"/>
+                            </Border.Effect>
+                            <StackPanel>
+                                <TextBlock Text="{Binding Name}" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,5"/>
+                                <Separator Background="#F1F1F1" Margin="0,5"/>
+                                
+                                <Grid Margin="0,5">
+                                    <TextBlock Text="🗓 تاريخ الاستلام:" Foreground="#7F8C8D" HorizontalAlignment="Left"/>
+                                    <TextBlock Text="{Binding DeliveryDate}" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                                </Grid>
 
-        function validate() {
-            const p = document.getElementById('passInput').value;
-            if (p === "2606") { // الباسورد بتاعك هنا
-                document.getElementById('loginSection').style.display = "none";
-                document.getElementById('dashboardSection').style.display = "block";
-                document.body.style.display = "block";
-                startSystem();
-            } else {
-                document.getElementById('err').style.display = "block";
-            }
-        }
+                                <Grid Margin="0,5">
+                                    <TextBlock Text="💰 سعر الفستان:" Foreground="#7F8C8D" HorizontalAlignment="Left"/>
+                                    <TextBlock Text="{Binding TotalPrice, StringFormat={}{0} ج.م}" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                                </Grid>
 
-        function startSystem() {
-            document.getElementById('todayDate').innerText = new Date().toLocaleDateString('ar-EG');
-            db.on('value', snap => {
-                const d = snap.val();
-                rawData = d ? Object.keys(d).map(k => d[k]).reverse() : [];
-                draw();
-            });
-        }
+                                <Grid Margin="0,5">
+                                    <TextBlock Text="✅ المدفوع:" Foreground="#27AE60" HorizontalAlignment="Left"/>
+                                    <TextBlock Text="{Binding Paid, StringFormat={}{0} ج.م}" FontWeight="SemiBold" Foreground="#27AE60" HorizontalAlignment="Right"/>
+                                </Grid>
 
-        function draw() {
-            const s = document.getElementById('srch').value.toLowerCase();
-            const list = document.getElementById('list');
-            list.innerHTML = "";
-            let totalP = 0;
-
-            rawData.forEach(c => {
-                if (c.CustomerName.toLowerCase().includes(s)) {
-                    totalP += parseFloat(c.Paid || 0);
-                    list.innerHTML += `
-                        <div class="customer-card">
-                            <b>${c.CustomerName}</b><br>
-                            <small>مطلوب: ${c.Total} | مدفوع: ${c.Paid}</small><br>
-                            <small style="color:var(--primary)">استلام: ${c.DeliveryDate}</small>
-                        </div>`;
-                }
-            });
-            document.getElementById('count').innerText = rawData.length;
-            document.getElementById('income').innerText = totalP.toLocaleString();
-        }
-    </script>
-</body>
-</html>
+                                <Grid Margin="0,5">
+                                    <TextBlock Text="🔴 المتبقي:" Foreground="#E74C3C" HorizontalAlignment="Left"/>
+                                    <TextBlock Text="{Binding Remaining, StringFormat={}{0} ج.م}" FontWeight="Bold" Foreground="#E74C3C" HorizontalAlignment="Right"/>
+                                </Grid>
+                                
+                                <Button Content="تعديل البيانات" Margin="0,10,0,0" Background="#3498DB" Foreground="White" BorderThickness="0" Height="30">
+                                    <Button.Resources>
+                                        <Style TargetType="Border">
+                                            <Setter Property="CornerRadius" Value="5"/>
+                                        </Style>
+                                    </Button.Resources>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</Window>
