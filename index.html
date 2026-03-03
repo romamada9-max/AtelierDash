@@ -3,108 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم أتيليه أحمد حمزة</title>
-    
+    <title>Dashboard | أحمد حمزة</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        :root { --main-color: #d81b60; --bg-color: #fce4ec; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg-color); margin: 0; padding: 10px; }
-        .header { background: var(--main-color); color: white; padding: 15px; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .card { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .card h3 { margin: 0; font-size: 13px; color: #888; }
-        .card p { margin: 5px 0 0; font-size: 18px; font-weight: bold; color: var(--main-color); }
-        .list-title { text-align: right; margin-right: 10px; color: #333; font-size: 16px; border-right: 4px solid var(--main-color); padding-right: 10px; }
-        #customersContainer { margin-top: 10px; }
-        .customer-item { background: white; padding: 12px; border-radius: 10px; margin-bottom: 10px; text-align: right; box-shadow: 0 2px 4px rgba(0,0,0,0.03); border-right: 5px solid var(--main-color); }
-        .cust-name { display: block; font-size: 16px; font-weight: bold; color: #333; }
-        .cust-details { font-size: 13px; color: #666; margin-top: 5px; }
-        .cust-date { display: block; font-size: 12px; color: var(--main-color); margin-top: 5px; font-weight: bold; }
-        .loading { color: #999; margin-top: 50px; }
+        :root { --primary: #d81b60; --secondary: #ad1457; --bg: #f8f9fa; --white: #ffffff; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); margin: 0; padding: 0; }
+        .top-bar { background: var(--primary); color: white; padding: 20px; text-align: center; border-radius: 0 0 25px 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .container { padding: 15px; max-width: 600px; margin: auto; }
+        
+        /* كروت الإحصائيات */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: -30px; }
+        .stat-card { background: var(--white); padding: 15px; border-radius: 15px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+        .stat-card i { color: var(--primary); font-size: 20px; margin-bottom: 5px; }
+        .stat-card h3 { margin: 0; font-size: 12px; color: #777; }
+        .stat-card p { margin: 5px 0 0; font-size: 18px; font-weight: bold; color: var(--primary); }
+
+        /* منطقة البحث */
+        .search-box { background: white; padding: 10px; border-radius: 12px; margin: 20px 0; display: flex; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .search-box input { border: none; outline: none; width: 100%; padding: 8px; font-size: 16px; text-align: right; }
+        
+        /* تبويب استلامات اليوم */
+        .tab-header { display: flex; justify-content: space-around; margin-bottom: 15px; border-bottom: 2px solid #eee; }
+        .tab-btn { padding: 10px; cursor: pointer; color: #888; font-weight: bold; transition: 0.3s; }
+        .tab-btn.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
+
+        /* كارت العميلة */
+        .customer-card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 12px; border-right: 6px solid #ddd; position: relative; transition: 0.3s; }
+        .status-today { border-right-color: #4caf50 !important; background: #e8f5e9; }
+        .cust-header { display: flex; justify-content: space-between; align-items: center; }
+        .cust-name { font-size: 17px; font-weight: bold; color: #333; }
+        .price-tag { background: #fce4ec; color: var(--primary); padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .cust-info { font-size: 13px; color: #666; margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+        .delivery-date { font-size: 12px; font-weight: bold; color: #ad1457; margin-top: 8px; display: block; }
+        
+        .badge-today { background: #4caf50; color: white; padding: 2px 8px; border-radius: 5px; font-size: 10px; float: left; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h2 style="margin:0;">أتيليه أحمد حمزة 👗</h2>
-        <div id="dateNow" style="font-size: 12px; opacity: 0.8; margin-top: 5px;"></div>
+    <div class="top-bar">
+        <h2 style="margin:0;">أتيليه أحمد حمزة <i class="fas fa-crown"></i></h2>
+        <p id="todayDateStr" style="font-size: 12px; opacity: 0.9;"></p>
     </div>
 
-    <div class="stats">
-        <div class="card">
-            <h3>عدد العميلات</h3>
-            <p id="totalCount">0</p>
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-calendar-check"></i>
+                <h3>استلامات اليوم</h3>
+                <p id="todayCount">0</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-wallet"></i>
+                <h3>إجمالي المقدم</h3>
+                <p id="totalIncome">0</p>
+            </div>
         </div>
-        <div class="card">
-            <h3>إجمالي المقدم</h3>
-            <p id="totalIncome">0</p>
-        </div>
-    </div>
 
-    <h3 class="list-title">آخر الحجوزات المسجلة:</h3>
-    
-    <div id="customersContainer">
-        <div class="loading">جاري الاتصال بالسحاب...</div>
+        <div class="search-box">
+            <i class="fas fa-search" style="color: #ccc; margin-left: 10px;"></i>
+            <input type="text" id="searchInput" placeholder="ابحث باسم العميلة أو رقم التليفون..." onkeyup="filterData()">
+        </div>
+
+        <div class="tab-header">
+            <div class="tab-btn active" id="btnAll" onclick="showTab('all')">كل الحجوزات</div>
+            <div class="tab-btn" id="btnToday" onclick="showTab('today')">مواعيد اليوم ✨</div>
+        </div>
+
+        <div id="customersContainer">
+            <p style="text-align:center; color:#999; margin-top:30px;">جاري تحميل البيانات...</p>
+        </div>
     </div>
 
     <script>
-        // 1. إعدادات Firebase - استبدل الرابط برابط مشروعك
-        const firebaseConfig = {
-            databaseURL: "https://ateliersystem-3ed22-default-rtdb.firebaseio.com/" 
-        };
-
-        // تهيئة Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        
+        // إعدادات Firebase
+        const firebaseConfig = { databaseURL: "https://ateliersystem-3ed22-default-rtdb.firebaseio.com/" };
+        firebase.initializeApp(firebaseConfig);
         const db = firebase.database().ref("LiveAtelier");
 
-        // عرض تاريخ اليوم
-        document.getElementById('dateNow').innerText = new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        let allData = [];
+        let currentTab = 'all';
 
-        // جلب البيانات وتحديثها تلقائياً
+        // تاريخ اليوم بتنسيق البرنامج (تأكد إنه نفس التنسيق في الـ C#)
+        const todayDateFormatted = new Date().toLocaleDateString('ar-EG');
+        document.getElementById('todayDateStr').innerText = new Date().toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' });
+
         db.on('value', (snapshot) => {
-            const container = document.getElementById('customersContainer');
             const data = snapshot.val();
-            
-            if (!data) {
-                container.innerHTML = "<div class='loading'>في انتظار تسجيل أول عميلة من البرنامج...</div>";
-                return;
+            allData = [];
+            if (data) {
+                Object.keys(data).forEach(key => {
+                    allData.push({ id: key, ...data[key] });
+                });
+                allData.reverse(); // الأحدث أولاً
             }
+            renderData();
+        });
 
+        function renderData() {
+            const container = document.getElementById('customersContainer');
+            const searchVal = document.getElementById('searchInput').value.toLowerCase();
             container.innerHTML = "";
-            let count = 0;
-            let income = 0;
 
-            // تحويل البيانات لمصفوفة وعكسها لعرض الأحدث فوق
-            const keys = Object.keys(data).reverse();
-            
-            keys.forEach(key => {
-                const cust = data[key];
-                count++;
-                income += parseFloat(cust.Paid || 0);
+            let todayCounter = 0;
+            let totalIncome = 0;
 
-                const html = `
-                    <div class="customer-item">
-                        <span class="cust-name">${cust.CustomerName}</span>
-                        <div class="cust-details">
-                            💰 المبلغ: ${cust.Total} ج.م | 💵 المقدم: ${cust.Paid}
+            allData.forEach(cust => {
+                const isToday = cust.DeliveryDate === todayDateFormatted;
+                if (isToday) todayCounter++;
+                totalIncome += parseFloat(cust.Paid || 0);
+
+                // فلاتر البحث والتبويب
+                const matchesSearch = cust.CustomerName.toLowerCase().includes(searchVal) || (cust.Phone && cust.Phone.includes(searchVal));
+                const matchesTab = (currentTab === 'all') || (currentTab === 'today' && isToday);
+
+                if (matchesSearch && matchesTab) {
+                    const card = `
+                        <div class="customer-card ${isToday ? 'status-today' : ''}">
+                            <div class="cust-header">
+                                <span class="cust-name">${cust.CustomerName}</span>
+                                <span class="price-tag">المقدم: ${cust.Paid} ج.م</span>
+                            </div>
+                            <div class="cust-info">
+                                <span><i class="fas fa-money-bill-wave"></i> الحساب بالكامل: ${cust.Total} ج.م</span>
+                                <span><i class="fas fa-phone"></i> ${cust.Phone || 'بدون رقم'}</span>
+                            </div>
+                            <span class="delivery-date">
+                                <i class="fas fa-clock"></i> استلام: ${cust.DeliveryDate}
+                                ${isToday ? '<span class="badge-today">موعد اليوم</span>' : ''}
+                            </span>
                         </div>
-                        <span class="cust-date">🗓 موعد التسليم: ${cust.DeliveryDate}</span>
-                    </div>
-                `;
-                container.innerHTML += html;
+                    `;
+                    container.innerHTML += card;
+                }
             });
 
-            // تحديث كروت الإحصائيات
-            document.getElementById('totalCount').innerText = count;
-            document.getElementById('totalIncome').innerText = income.toLocaleString() + " ج.م";
-        }, (error) => {
-            document.getElementById('customersContainer').innerHTML = "<div style='color:red'>خطأ في الوصول للبيانات: تأكد من الـ Rules في Firebase</div>";
-        });
+            document.getElementById('todayCount').innerText = todayCounter;
+            document.getElementById('totalIncome').innerText = totalIncome.toLocaleString();
+            
+            if (container.innerHTML === "") {
+                container.innerHTML = "<p style='text-align:center; color:#999; margin-top:20px;'>لا توجد نتائج مطابقة</p>";
+            }
+        }
+
+        function filterData() { renderData(); }
+
+        function showTab(tab) {
+            currentTab = tab;
+            document.getElementById('btnAll').classList.toggle('active', tab === 'all');
+            document.getElementById('btnToday').classList.toggle('active', tab === 'today');
+            renderData();
+        }
     </script>
 </body>
 </html>
