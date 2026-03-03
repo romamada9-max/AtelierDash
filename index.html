@@ -3,159 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | أحمد حمزة</title>
+    <title>دخول | أتيليه أحمد حمزة</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
     <style>
-        :root { --primary: #d81b60; --secondary: #ad1457; --bg: #f8f9fa; --white: #ffffff; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); margin: 0; padding: 0; }
-        .top-bar { background: var(--primary); color: white; padding: 20px; text-align: center; border-radius: 0 0 25px 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .container { padding: 15px; max-width: 600px; margin: auto; }
-        
-        /* كروت الإحصائيات */
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: -30px; }
-        .stat-card { background: var(--white); padding: 15px; border-radius: 15px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
-        .stat-card i { color: var(--primary); font-size: 20px; margin-bottom: 5px; }
-        .stat-card h3 { margin: 0; font-size: 12px; color: #777; }
-        .stat-card p { margin: 5px 0 0; font-size: 18px; font-weight: bold; color: var(--primary); }
-
-        /* منطقة البحث */
-        .search-box { background: white; padding: 10px; border-radius: 12px; margin: 20px 0; display: flex; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .search-box input { border: none; outline: none; width: 100%; padding: 8px; font-size: 16px; text-align: right; }
-        
-        /* تبويب استلامات اليوم */
-        .tab-header { display: flex; justify-content: space-around; margin-bottom: 15px; border-bottom: 2px solid #eee; }
-        .tab-btn { padding: 10px; cursor: pointer; color: #888; font-weight: bold; transition: 0.3s; }
-        .tab-btn.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
-
-        /* كارت العميلة */
-        .customer-card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 12px; border-right: 6px solid #ddd; position: relative; transition: 0.3s; }
-        .status-today { border-right-color: #4caf50 !important; background: #e8f5e9; }
-        .cust-header { display: flex; justify-content: space-between; align-items: center; }
-        .cust-name { font-size: 17px; font-weight: bold; color: #333; }
-        .price-tag { background: #fce4ec; color: var(--primary); padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-        .cust-info { font-size: 13px; color: #666; margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
-        .delivery-date { font-size: 12px; font-weight: bold; color: #ad1457; margin-top: 8px; display: block; }
-        
-        .badge-today { background: #4caf50; color: white; padding: 2px 8px; border-radius: 5px; font-size: 10px; float: left; }
+        body { font-family: 'Segoe UI', sans-serif; background: #fce4ec; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-box { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 300px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; text-align: center; }
+        button { width: 100%; padding: 12px; border: none; background: #d81b60; color: white; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        #dashboard { display: none; width: 100%; height: 100vh; background: #f8f9fa; position: absolute; top: 0; left: 0; overflow-y: auto; }
     </style>
 </head>
 <body>
 
-    <div class="top-bar">
-        <h2 style="margin:0;">أتيليه أحمد حمزة <i class="fas fa-crown"></i></h2>
-        <p id="todayDateStr" style="font-size: 12px; opacity: 0.9;"></p>
+    <div id="loginPage" class="login-box">
+        <h2 style="color:#d81b60">دخول الإدارة</h2>
+        <input type="password" id="passInput" placeholder="أدخل كلمة المرور">
+        <button onclick="checkPass()">دخول</button>
+        <p id="errMsg" style="color:red; font-size:12px; display:none;">كلمة المرور غير صحيحة!</p>
     </div>
 
-    <div class="container">
-        <div class="stats-grid">
-            <div class="stat-card">
-                <i class="fas fa-calendar-check"></i>
-                <h3>استلامات اليوم</h3>
-                <p id="todayCount">0</p>
-            </div>
-            <div class="stat-card">
-                <i class="fas fa-wallet"></i>
-                <h3>إجمالي المقدم</h3>
-                <p id="totalIncome">0</p>
-            </div>
-        </div>
-
-        <div class="search-box">
-            <i class="fas fa-search" style="color: #ccc; margin-left: 10px;"></i>
-            <input type="text" id="searchInput" placeholder="ابحث باسم العميلة أو رقم التليفون..." onkeyup="filterData()">
-        </div>
-
-        <div class="tab-header">
-            <div class="tab-btn active" id="btnAll" onclick="showTab('all')">كل الحجوزات</div>
-            <div class="tab-btn" id="btnToday" onclick="showTab('today')">مواعيد اليوم ✨</div>
-        </div>
-
-        <div id="customersContainer">
-            <p style="text-align:center; color:#999; margin-top:30px;">جاري تحميل البيانات...</p>
-        </div>
+    <div id="dashboard">
+        <iframe src="about:blank" id="contentFrame" style="width: 100%; height: 100%; border: none;"></iframe>
     </div>
 
     <script>
-        // إعدادات Firebase
-        const firebaseConfig = { databaseURL: "https://ateliersystem-3ed22-default-rtdb.firebaseio.com/" };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database().ref("LiveAtelier");
-
-        let allData = [];
-        let currentTab = 'all';
-
-        // تاريخ اليوم بتنسيق البرنامج (تأكد إنه نفس التنسيق في الـ C#)
-        const todayDateFormatted = new Date().toLocaleDateString('ar-EG');
-        document.getElementById('todayDateStr').innerText = new Date().toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' });
-
-        db.on('value', (snapshot) => {
-            const data = snapshot.val();
-            allData = [];
-            if (data) {
-                Object.keys(data).forEach(key => {
-                    allData.push({ id: key, ...data[key] });
-                });
-                allData.reverse(); // الأحدث أولاً
-            }
-            renderData();
-        });
-
-        function renderData() {
-            const container = document.getElementById('customersContainer');
-            const searchVal = document.getElementById('searchInput').value.toLowerCase();
-            container.innerHTML = "";
-
-            let todayCounter = 0;
-            let totalIncome = 0;
-
-            allData.forEach(cust => {
-                const isToday = cust.DeliveryDate === todayDateFormatted;
-                if (isToday) todayCounter++;
-                totalIncome += parseFloat(cust.Paid || 0);
-
-                // فلاتر البحث والتبويب
-                const matchesSearch = cust.CustomerName.toLowerCase().includes(searchVal) || (cust.Phone && cust.Phone.includes(searchVal));
-                const matchesTab = (currentTab === 'all') || (currentTab === 'today' && isToday);
-
-                if (matchesSearch && matchesTab) {
-                    const card = `
-                        <div class="customer-card ${isToday ? 'status-today' : ''}">
-                            <div class="cust-header">
-                                <span class="cust-name">${cust.CustomerName}</span>
-                                <span class="price-tag">المقدم: ${cust.Paid} ج.م</span>
-                            </div>
-                            <div class="cust-info">
-                                <span><i class="fas fa-money-bill-wave"></i> الحساب بالكامل: ${cust.Total} ج.م</span>
-                                <span><i class="fas fa-phone"></i> ${cust.Phone || 'بدون رقم'}</span>
-                            </div>
-                            <span class="delivery-date">
-                                <i class="fas fa-clock"></i> استلام: ${cust.DeliveryDate}
-                                ${isToday ? '<span class="badge-today">موعد اليوم</span>' : ''}
-                            </span>
-                        </div>
-                    `;
-                    container.innerHTML += card;
-                }
-            });
-
-            document.getElementById('todayCount').innerText = todayCounter;
-            document.getElementById('totalIncome').innerText = totalIncome.toLocaleString();
-            
-            if (container.innerHTML === "") {
-                container.innerHTML = "<p style='text-align:center; color:#999; margin-top:20px;'>لا توجد نتائج مطابقة</p>";
+        function checkPass() {
+            const pass = document.getElementById('passInput').value;
+            // --- اختر الباسورد اللي يعجبك هنا ---
+            if (pass === "260686") { 
+                document.getElementById('loginPage').style.display = "none";
+                document.getElementById('dashboard').style.display = "block";
+                loadDashboard();
+            } else {
+                document.getElementById('errMsg').style.display = "block";
             }
         }
 
-        function filterData() { renderData(); }
-
-        function showTab(tab) {
-            currentTab = tab;
-            document.getElementById('btnAll').classList.toggle('active', tab === 'all');
-            document.getElementById('btnToday').classList.toggle('active', tab === 'today');
-            renderData();
+        function loadDashboard() {
+            // هنا بنشغل كود الـ Firebase والبحث
+            // ملاحظة: للأمان التام بكرة هنخلي الـ Firebase يطلب توثيق رسمي
+            console.log("تم تسجيل الدخول بنجاح");
         }
     </script>
 </body>
