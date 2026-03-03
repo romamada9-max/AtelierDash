@@ -3,47 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>دخول | أتيليه أحمد حمزة</title>
+    <title>إدارة أتيليه أحمد حمزة</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #fce4ec; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-box { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 300px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; text-align: center; }
-        button { width: 100%; padding: 12px; border: none; background: #d81b60; color: white; border-radius: 10px; cursor: pointer; font-weight: bold; }
-        #dashboard { display: none; width: 100%; height: 100vh; background: #f8f9fa; position: absolute; top: 0; left: 0; overflow-y: auto; }
+        :root { --primary: #d81b60; --bg: #fce4ec; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        
+        /* شاشة الدخول */
+        #loginSection { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 350px; }
+        input[type="password"] { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ddd; border-radius: 10px; text-align: center; font-size: 18px; }
+        .login-btn { width: 100%; padding: 12px; border: none; background: var(--primary); color: white; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 16px; }
+
+        /* شاشة الداشبورد (مخفية في البداية) */
+        #dashboardSection { display: none; width: 100%; min-height: 100vh; background: #f8f9fa; align-self: flex-start; }
+        .top-bar { background: var(--primary); color: white; padding: 20px; text-align: center; border-radius: 0 0 25px 25px; }
+        .container { padding: 15px; max-width: 600px; margin: auto; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: -30px; }
+        .stat-card { background: white; padding: 15px; border-radius: 15px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+        .search-box { background: white; padding: 10px; border-radius: 12px; margin: 20px 0; display: flex; align-items: center; }
+        .search-box input { border: none; outline: none; width: 100%; padding: 8px; text-align: right; }
+        .customer-card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 12px; border-right: 6px solid var(--primary); text-align: right; }
     </style>
 </head>
 <body>
 
-    <div id="loginPage" class="login-box">
-        <h2 style="color:#d81b60">دخول الإدارة</h2>
-        <input type="password" id="passInput" placeholder="أدخل كلمة المرور">
-        <button onclick="checkPass()">دخول</button>
-        <p id="errMsg" style="color:red; font-size:12px; display:none;">كلمة المرور غير صحيحة!</p>
+    <div id="loginSection">
+        <i class="fas fa-lock" style="font-size: 40px; color: var(--primary);"></i>
+        <h2 style="color: #333;">دخول الإدارة</h2>
+        <input type="password" id="passInput" placeholder="كلمة المرور">
+        <button class="login-btn" onclick="validate()">دخول</button>
+        <p id="err" style="color:red; display:none; margin-top:10px;">خطأ! حاول مرة أخرى</p>
     </div>
 
-    <div id="dashboard">
-        <iframe src="about:blank" id="contentFrame" style="width: 100%; height: 100%; border: none;"></iframe>
+    <div id="dashboardSection">
+        <div class="top-bar">
+            <h2 style="margin:0;">لوحة التحكم 👗</h2>
+            <p id="todayDate" style="font-size:12px; opacity:0.8;"></p>
+        </div>
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card"><h3>العميلات</h3><p id="count">0</p></div>
+                <div class="stat-card"><h3>المحصل</h3><p id="income">0</p></div>
+            </div>
+            <div class="search-box">
+                <input type="text" id="srch" placeholder="بحث بالاسم..." onkeyup="draw()">
+                <i class="fas fa-search" style="color:#ccc"></i>
+            </div>
+            <div id="list"></div>
+        </div>
     </div>
 
     <script>
-        function checkPass() {
-            const pass = document.getElementById('passInput').value;
-            // --- اختر الباسورد اللي يعجبك هنا ---
-            if (pass === "260686") { 
-                document.getElementById('loginPage').style.display = "none";
-                document.getElementById('dashboard').style.display = "block";
-                loadDashboard();
+        // إعدادات Firebase
+        const conf = { databaseURL: "https://ateliersystem-3ed22-default-rtdb.firebaseio.com/" };
+        firebase.initializeApp(conf);
+        const db = firebase.database().ref("LiveAtelier");
+        let rawData = [];
+
+        function validate() {
+            const p = document.getElementById('passInput').value;
+            if (p === "2606") { // الباسورد بتاعك هنا
+                document.getElementById('loginSection').style.display = "none";
+                document.getElementById('dashboardSection').style.display = "block";
+                document.body.style.display = "block";
+                startSystem();
             } else {
-                document.getElementById('errMsg').style.display = "block";
+                document.getElementById('err').style.display = "block";
             }
         }
 
-        function loadDashboard() {
-            // هنا بنشغل كود الـ Firebase والبحث
-            // ملاحظة: للأمان التام بكرة هنخلي الـ Firebase يطلب توثيق رسمي
-            console.log("تم تسجيل الدخول بنجاح");
+        function startSystem() {
+            document.getElementById('todayDate').innerText = new Date().toLocaleDateString('ar-EG');
+            db.on('value', snap => {
+                const d = snap.val();
+                rawData = d ? Object.keys(d).map(k => d[k]).reverse() : [];
+                draw();
+            });
+        }
+
+        function draw() {
+            const s = document.getElementById('srch').value.toLowerCase();
+            const list = document.getElementById('list');
+            list.innerHTML = "";
+            let totalP = 0;
+
+            rawData.forEach(c => {
+                if (c.CustomerName.toLowerCase().includes(s)) {
+                    totalP += parseFloat(c.Paid || 0);
+                    list.innerHTML += `
+                        <div class="customer-card">
+                            <b>${c.CustomerName}</b><br>
+                            <small>مطلوب: ${c.Total} | مدفوع: ${c.Paid}</small><br>
+                            <small style="color:var(--primary)">استلام: ${c.DeliveryDate}</small>
+                        </div>`;
+                }
+            });
+            document.getElementById('count').innerText = rawData.length;
+            document.getElementById('income').innerText = totalP.toLocaleString();
         }
     </script>
 </body>
