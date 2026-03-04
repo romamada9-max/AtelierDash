@@ -1,90 +1,226 @@
-<Window x:Class="AtelierPro.CustomersWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="إدارة العملاء - أتيليه الملكة" Height="700" Width="1000"
-        WindowStartupLocation="CenterScreen" FlowDirection="RightToLeft" Background="#F0F2F5">
-    
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/> <RowDefinition Height="Auto"/> <RowDefinition Height="*"/>    </Grid.RowDefinitions>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أتيليه احمد حمزة - إدارة العملاء</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #d4af37; /* لون ذهبي للأتيليه */
+            --bg-color: #f4f7f6;
+            --success: #27ae60;
+            --danger: #e74c3c;
+        }
 
-        <Border Grid.Row="0" Background="#34495E" Padding="15">
-            <TextBlock Text="✨ أتيليه الملكة - إدارة الحجوزات ✨" 
-                       Foreground="White" FontSize="26" FontWeight="Bold" 
-                       HorizontalAlignment="Center" FontFamily="Segoe UI"/>
-        </Border>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+        }
 
-        <StackPanel Grid.Row="1" Margin="20,10">
-            <Border Background="White" CornerRadius="20" Padding="10" Margin="0,0,0,15" BorderBrush="#DDD" BorderThickness="1">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="🔍" VerticalAlignment="Center" Margin="10,0"/>
-                    <TextBox x:Name="TxtSearch" Grid.Column="1" BorderThickness="0" 
-                             VerticalAlignment="Center" FontSize="16" 
-                             TextChanged="TxtSearch_TextChanged" Tag="ابحث باسم العميل أو رقم الهاتف..."/>
-                </Grid>
-            </Border>
+        /* العنوان */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--primary-color);
+        }
 
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <RadioButton Content="كل العملاء" x:Name="BtnAll" IsChecked="True" Style="{StaticResource {x:Type ToggleButton}}" Padding="15,5" Margin="5" Click="Filter_Click"/>
-                <RadioButton Content="تسليمات اليوم" x:Name="BtnToday" Style="{StaticResource {x:Type ToggleButton}}" Padding="15,5" Margin="5" Click="Filter_Click"/>
-                <RadioButton Content="تسليمات الأسبوع" x:Name="BtnWeek" Style="{StaticResource {x:Type ToggleButton}}" Padding="15,5" Margin="5" Click="Filter_Click"/>
-            </StackPanel>
-        </StackPanel>
+        .header h1 {
+            font-size: 2.5rem;
+            border-bottom: 3px solid var(--accent-color);
+            display: inline-block;
+            padding-bottom: 10px;
+        }
 
-        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="10">
-            <ItemsControl x:Name="CustomersItemsControl">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel HorizontalAlignment="Center"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Width="300" Margin="10" Background="White" CornerRadius="15" Padding="15">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="15" Direction="270" ShadowDepth="2" Opacity="0.1"/>
-                            </Border.Effect>
-                            <StackPanel>
-                                <TextBlock Text="{Binding Name}" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,5"/>
-                                <Separator Background="#F1F1F1" Margin="0,5"/>
-                                
-                                <Grid Margin="0,5">
-                                    <TextBlock Text="🗓 تاريخ الاستلام:" Foreground="#7F8C8D" HorizontalAlignment="Left"/>
-                                    <TextBlock Text="{Binding DeliveryDate}" FontWeight="SemiBold" HorizontalAlignment="Right"/>
-                                </Grid>
+        /* أدوات البحث والفلترة */
+        .controls {
+            max-width: 900px;
+            margin: 0 auto 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
 
-                                <Grid Margin="0,5">
-                                    <TextBlock Text="💰 سعر الفستان:" Foreground="#7F8C8D" HorizontalAlignment="Left"/>
-                                    <TextBlock Text="{Binding TotalPrice, StringFormat={}{0} ج.م}" FontWeight="SemiBold" HorizontalAlignment="Right"/>
-                                </Grid>
+        .search-box {
+            width: 100%;
+            max-width: 500px;
+            padding: 12px 20px;
+            border-radius: 25px;
+            border: 2px solid #ddd;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+        }
 
-                                <Grid Margin="0,5">
-                                    <TextBlock Text="✅ المدفوع:" Foreground="#27AE60" HorizontalAlignment="Left"/>
-                                    <TextBlock Text="{Binding Paid, StringFormat={}{0} ج.م}" FontWeight="SemiBold" Foreground="#27AE60" HorizontalAlignment="Right"/>
-                                </Grid>
+        .search-box:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+        }
 
-                                <Grid Margin="0,5">
-                                    <TextBlock Text="🔴 المتبقي:" Foreground="#E74C3C" HorizontalAlignment="Left"/>
-                                    <TextBlock Text="{Binding Remaining, StringFormat={}{0} ج.م}" FontWeight="Bold" Foreground="#E74C3C" HorizontalAlignment="Right"/>
-                                </Grid>
-                                
-                                <Button Content="تعديل البيانات" Margin="0,10,0,0" Background="#3498DB" Foreground="White" BorderThickness="0" Height="30">
-                                    <Button.Resources>
-                                        <Style TargetType="Border">
-                                            <Setter Property="CornerRadius" Value="5"/>
-                                        </Style>
-                                    </Button.Resources>
-                                </Button>
-                            </StackPanel>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
-    </Grid>
-</Window>
+        .filters {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 20px;
+            background: white;
+            color: var(--primary-color);
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .filter-btn.active, .filter-btn:hover {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        /* شبكة الكروت */
+        .customers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            top: 0; right: 0;
+            width: 5px; height: 100%;
+            background: var(--accent-color);
+        }
+
+        .card h3 {
+            margin: 0 0 15px 0;
+            color: var(--primary-color);
+            font-size: 1.4rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .label { color: #7f8c8d; }
+        .value { font-weight: bold; color: #2c3e50; }
+
+        .price-total { border-top: 1px solid #eee; pt: 10px; margin-top: 10px; }
+        .paid { color: var(--success); }
+        .remaining { color: var(--danger); }
+
+        .btn-details {
+            width: 100%;
+            margin-top: 15px;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            font-family: 'Cairo';
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>👑 أتيليه الملكة</h1>
+    </div>
+
+    <div class="controls">
+        <input type="text" class="search-box" id="searchInput" placeholder="ابحث باسم العميل أو رقم الهاتف...">
+        
+        <div class="filters">
+            <button class="filter-btn active" onclick="filterData('all')">كل العملاء</button>
+            <button class="filter-btn" onclick="filterData('today')">تسليمات اليوم</button>
+            <button class="filter-btn" onclick="filterData('week')">تسليمات الأسبوع</button>
+        </div>
+    </div>
+
+    <div class="customers-grid" id="customersContainer">
+        </div>
+
+    <script>
+        // بيانات تجريبية (سيتم استبدالها ببيانات من قاعدة البيانات لاحقاً)
+        const customers = [
+            { id: 1, name: "سارة أحمد", date: "2026-03-04", total: 5000, paid: 3000, phone: "01012345678" },
+            { id: 2, name: "منى محمد", date: "2026-03-10", total: 7000, paid: 7000, phone: "01287654321" },
+            { id: 3, name: "ليلى محمود", date: "2026-03-05", total: 4500, paid: 1000, phone: "01122334455" }
+        ];
+
+        function renderCards(data) {
+            const container = document.getElementById('customersContainer');
+            container.innerHTML = '';
+
+            data.forEach(c => {
+                const remaining = c.total - c.paid;
+                container.innerHTML += `
+                    <div class="card">
+                        <h3>${c.name}</h3>
+                        <div class="info-row">
+                            <span class="label">📅 تاريخ الاستلام:</span>
+                            <span class="value">${c.date}</span>
+                        </div>
+                        <div class="info-row price-total">
+                            <span class="label">💰 تمن الفستان:</span>
+                            <span class="value">${c.total} ج.م</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">✅ المدفوع:</span>
+                            <span class="value paid">${c.paid} ج.م</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">🛑 المتبقي:</span>
+                            <span class="value remaining">${remaining} ج.م</span>
+                        </div>
+                        <button class="btn-details" onclick="alert('فتح تفاصيل: ${c.name}')">عرض التفاصيل</button>
+                    </div>
+                `;
+            });
+        }
+
+        // تشغيل البحث
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = customers.filter(c => c.name.includes(term) || c.phone.includes(term));
+            renderCards(filtered);
+        });
+
+        // تشغيل الفلاتر (مثال مبسط)
+        function filterData(type) {
+            // هنا تضع منطق التاريخ الحقيقي
+            alert("تم اختيار فلتر: " + type);
+        }
+
+        // العرض الأولي
+        renderCards(customers);
+    </script>
+</body>
+</html>
