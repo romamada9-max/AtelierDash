@@ -3,225 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>أتيليه احمد حمزة - إدارة العملاء</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <title>متابعة أتيليه احمد حمزة</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
     <style>
-        :root {
-            --primary-color: #2c3e50;
-            --accent-color: #d4af37; /* لون ذهبي للأتيليه */
-            --bg-color: #f4f7f6;
-            --success: #27ae60;
-            --danger: #e74c3c;
-        }
-
-        body {
-            font-family: 'Cairo', sans-serif;
-            background-color: var(--bg-color);
-            margin: 0;
-            padding: 20px;
-        }
-
-        /* العنوان */
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            color: var(--primary-color);
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            border-bottom: 3px solid var(--accent-color);
-            display: inline-block;
-            padding-bottom: 10px;
-        }
-
-        /* أدوات البحث والفلترة */
-        .controls {
-            max-width: 900px;
-            margin: 0 auto 30px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .search-box {
-            width: 100%;
-            max-width: 500px;
-            padding: 12px 20px;
-            border-radius: 25px;
-            border: 2px solid #ddd;
-            font-size: 1rem;
-            outline: none;
-            transition: 0.3s;
-        }
-
-        .search-box:focus {
-            border-color: var(--accent-color);
-            box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
-        }
-
-        .filters {
-            display: flex;
-            gap: 10px;
-        }
-
-        .filter-btn {
-            padding: 8px 20px;
-            border: none;
-            border-radius: 20px;
-            background: white;
-            color: var(--primary-color);
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .filter-btn.active, .filter-btn:hover {
-            background: var(--accent-color);
-            color: white;
-        }
-
-        /* شبكة الكروت */
-        .customers-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            transition: transform 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        .card::before {
-            content: "";
-            position: absolute;
-            top: 0; right: 0;
-            width: 5px; height: 100%;
-            background: var(--accent-color);
-        }
-
-        .card h3 {
-            margin: 0 0 15px 0;
-            color: var(--primary-color);
-            font-size: 1.4rem;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 0.95rem;
-        }
-
-        .label { color: #7f8c8d; }
-        .value { font-weight: bold; color: #2c3e50; }
-
-        .price-total { border-top: 1px solid #eee; pt: 10px; margin-top: 10px; }
-        .paid { color: var(--success); }
-        .remaining { color: var(--danger); }
-
-        .btn-details {
-            width: 100%;
-            margin-top: 15px;
-            padding: 10px;
-            border: none;
-            border-radius: 8px;
-            background: var(--primary-color);
-            color: white;
-            cursor: pointer;
-            font-family: 'Cairo';
-        }
-
+        :root { --main-color: #d81b60; --bg-color: #fce4ec; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; padding: 15px; }
+        .header { background: var(--main-color); color: white; padding: 20px; text-align: center; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-right: 5px solid var(--main-color); }
+        .customer-name { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 5px; }
+        .detail { font-size: 14px; color: #666; margin: 3px 0; }
+        .amount { color: #e91e63; font-weight: bold; font-size: 16px; }
+        .date { color: #2e7d32; font-weight: bold; }
+        .loading { text-align: center; color: var(--main-color); font-weight: bold; margin-top: 50px; }
+        #stats { display: flex; justify-content: space-around; margin-bottom: 20px; }
+        .stat-box { background: white; padding: 10px; border-radius: 10px; text-align: center; width: 45%; font-size: 13px; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>👑 أتيليه احمد حمزة</h1>
+        <h1>لوحة تحكم الأتيليه 👗</h1>
+        <p>متابعة العملاء والمواعيد</p>
     </div>
 
-    <div class="controls">
-        <input type="text" class="search-box" id="searchInput" placeholder="ابحث باسم العميل أو رقم الهاتف...">
-        
-        <div class="filters">
-            <button class="filter-btn active" onclick="filterData('all')">كل العملاء</button>
-            <button class="filter-btn" onclick="filterData('today')">تسليمات اليوم</button>
-            <button class="filter-btn" onclick="filterData('week')">تسليمات الأسبوع</button>
-        </div>
+    <div id="stats">
+        <div class="stat-box">عدد العميلات: <br><span id="count">0</span></div>
+        <div class="stat-box">إجمالي المتبقي: <br><span id="totalRem" style="color:red">0</span></div>
     </div>
 
-    <div class="customers-grid" id="customersContainer">
-        </div>
+    <div id="loading" class="loading">جاري جلب البيانات من السحابة...</div>
+    <div id="customer-list"></div>
 
     <script>
-        // بيانات تجريبية (سيتم استبدالها ببيانات من قاعدة البيانات لاحقاً)
-        const customers = [
-            { id: 1, name: "سارة أحمد", date: "2026-03-04", total: 5000, paid: 3000, phone: "01012345678" },
-            { id: 2, name: "منى محمد", date: "2026-03-10", total: 7000, paid: 7000, phone: "01287654321" },
-            { id: 3, name: "ليلى محمود", date: "2026-03-05", total: 4500, paid: 1000, phone: "01122334455" }
-        ];
+        // --- إعدادات Firebase الخاصة بك ---
+        const firebaseConfig = {
+            databaseURL: "https://ateliersystem-3ed22-default-rtdb.firebaseio.com/"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-        function renderCards(data) {
-            const container = document.getElementById('customersContainer');
-            container.innerHTML = '';
+        // جلب البيانات من المسار الذي رفعنا عليه (LiveAtelier)
+        const customersRef = db.ref('LiveAtelier');
 
-            data.forEach(c => {
-                const remaining = c.total - c.paid;
-                container.innerHTML += `
-                    <div class="card">
-                        <h3>${c.name}</h3>
-                        <div class="info-row">
-                            <span class="label">📅 تاريخ الاستلام:</span>
-                            <span class="value">${c.date}</span>
-                        </div>
-                        <div class="info-row price-total">
-                            <span class="label">💰 تمن الفستان:</span>
-                            <span class="value">${c.total} ج.م</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">✅ المدفوع:</span>
-                            <span class="value paid">${c.paid} ج.م</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">🛑 المتبقي:</span>
-                            <span class="value remaining">${remaining} ج.م</span>
-                        </div>
-                        <button class="btn-details" onclick="alert('فتح تفاصيل: ${c.name}')">عرض التفاصيل</button>
-                    </div>
-                `;
-            });
-        }
+        customersRef.on('value', (snapshot) => {
+            const listContainer = document.getElementById('customer-list');
+            const loading = document.getElementById('loading');
+            const countSpan = document.getElementById('count');
+            const totalRemSpan = document.getElementById('totalRem');
+            
+            listContainer.innerHTML = '';
+            loading.style.display = 'none';
+            
+            let count = 0;
+            let totalRemaining = 0;
 
-        // تشغيل البحث
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase();
-            const filtered = customers.filter(c => c.name.includes(term) || c.phone.includes(term));
-            renderCards(filtered);
+            if (snapshot.exists()) {
+                snapshot.forEach((childSnapshot) => {
+                    const data = childSnapshot.val();
+                    count++;
+                    totalRemaining += parseFloat(data.Remaining || 0);
+
+                    const card = `
+                        <div class="card">
+                            <div class="customer-name">${data.CustomerName}</div>
+                            <div class="detail">📞 الهاتف: ${data.Phone}</div>
+                            <div class="detail">💰 المتبقي: <span class="amount">${data.Remaining} ج.م</span></div>
+                            <div class="detail">📅 موعد التسليم: <span class="date">${data.DeliveryDate}</span></div>
+                        </div>
+                    `;
+                    listContainer.innerHTML += card;
+                });
+                
+                countSpan.innerText = count;
+                totalRemSpan.innerText = totalRemaining.toLocaleString() + " ج.م";
+            } else {
+                listContainer.innerHTML = '<p style="text-align:center">لا توجد بيانات حالياً</p>';
+            }
         });
-
-        // تشغيل الفلاتر (مثال مبسط)
-        function filterData(type) {
-            // هنا تضع منطق التاريخ الحقيقي
-            alert("تم اختيار فلتر: " + type);
-        }
-
-        // العرض الأولي
-        renderCards(customers);
     </script>
 </body>
 </html>
-
